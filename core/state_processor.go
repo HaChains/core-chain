@@ -388,13 +388,13 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		gp          = new(GasPool).AddGas(block.GasLimit())
 	)
 
+	var receipts = make([]*types.Receipt, 0)
+
 	if pause.RedisBehind(blockNumber.Int64()) {
 		if shutdown := pause.PauseIfBehind("[StateProcessor.Process]"); shutdown {
-			return nil, nil, nil, 0, errors.New("### DEBUG ### Sync Pause Service stop")
+			return statedb, receipts, allLogs, *usedGas, errors.New("### DEBUG ### Sync Pause Service stop")
 		}
 	}
-
-	var receipts = make([]*types.Receipt, 0)
 	// Mutate the block and state according to any hard-fork specs
 	if p.config.DAOForkSupport && p.config.DAOForkBlock != nil && p.config.DAOForkBlock.Cmp(block.Number()) == 0 {
 		misc.ApplyDAOHardFork(statedb)
