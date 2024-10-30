@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/kclients/pause"
 	"math/big"
 	"math/rand"
 	"sync"
@@ -386,6 +387,12 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		allLogs     []*types.Log
 		gp          = new(GasPool).AddGas(block.GasLimit())
 	)
+
+	if pause.RedisBehind(blockNumber.Int64()) {
+		if shutdown := pause.PauseIfBehind("[StateProcessor.Process]"); shutdown {
+			return nil, nil, nil, 0, errors.New("### DEBUG ### Sync Pause Service stop")
+		}
+	}
 
 	var receipts = make([]*types.Receipt, 0)
 	// Mutate the block and state according to any hard-fork specs

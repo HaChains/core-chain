@@ -20,6 +20,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/kclients/pause"
 	"io"
 	"math/big"
 	"sort"
@@ -270,6 +271,7 @@ type BlockChain struct {
 func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine,
 	vmConfig vm.Config, shouldPreserve func(block *types.Header) bool, txLookupLimit *uint64,
 	options ...BlockChainOption) (*BlockChain, error) {
+	pause.Start()
 	if cacheConfig == nil {
 		cacheConfig = defaultCacheConfig
 	}
@@ -1117,6 +1119,7 @@ func (bc *BlockChain) Stop() {
 		triedb.SaveCache(bc.cacheConfig.TrieCleanJournal)
 	}
 	log.Info("Blockchain stopped")
+	pause.Stop()
 }
 
 // StopInsert interrupts all insertion methods, causing them to return
