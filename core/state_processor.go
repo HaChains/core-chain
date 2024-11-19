@@ -19,6 +19,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/kclients/pause"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -69,6 +70,12 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	)
 
 	var receipts = make([]*types.Receipt, 0)
+
+	if pause.RedisBehind(blockNumber.Int64()) {
+		if shutdown := pause.PauseIfBehind("[StateProcessor.Process]"); shutdown {
+			return statedb, receipts, allLogs, *usedGas, errors.New("### DEBUG ### Sync Pause Service stop")
+		}
+	}
 	// Mutate the block and state according to any hard-fork specs
 	if p.config.DAOForkSupport && p.config.DAOForkBlock != nil && p.config.DAOForkBlock.Cmp(block.Number()) == 0 {
 		misc.ApplyDAOHardFork(statedb)
